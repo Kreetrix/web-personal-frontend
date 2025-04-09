@@ -1,0 +1,272 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'neue-haas-grotesk', sans-serif;
+    height: 100vh;
+    overflow-x: hidden;
+    color: var(--black);
+    line-height: 1.6;
+}
+
+.topnav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 2rem;
+    z-index: 100;
+    mix-blend-mode: difference;
+    /* color: var(--white); */
+}
+
+.topnav a {
+    color: inherit;
+    text-decoration: none;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    transition: opacity 0.3s ease;
+}
+
+.topnav a:hover {
+    opacity: 0.6;
+}
+
+.main {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem;
+
+    overflow: hidden;
+    z-index: 1;
+}
+
+.logoBox{
+    
+    display: flex;
+}
+
+.subBox{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    overflow:hidden;
+    height: 100%;
+}
+
+.centerBox {
+    text-align: center;
+    max-width: 800px;
+    position: relative;
+    z-index: 2;
+}
+
+.logo {
+    font-family: "Space Grotesk", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
+    font-size: 7vw;
+    text-transform: uppercase;
+    letter-spacing: -1px;
+    margin-bottom: 1.5rem;
+    line-height: 1.1;
+}
+
+.tagline {
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+    font-weight: 300;
+}
+
+.btn-container {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    padding: 1rem 2rem;
+    background: transparent;
+    color: var(--black);
+    border: 1px solid var(--black);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-primary {
+    background: var(--black);
+    color: var(--white);
+}
+
+.btn:hover {
+    background: var(--black);
+    color: var(--white);
+}
+
+.info-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.info-item {
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .logo {
+        font-size: 2.5rem;
+    }
+    
+    .tagline {
+        font-size: 1rem;
+    }
+    
+    .btn-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .info-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+
+
+
+
+/* Restaurants */
+
+.directory-header {
+    padding: 8rem 2rem 4rem;
+    text-align: center;
+}
+
+.directory-title {
+    font-size: 2.5rem;
+    font-weight: 400;
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+}
+
+.directory-subtitle {
+    font-size: 1rem;
+    font-weight: 300;
+    max-width: 600px;
+    margin: 0 auto 3rem;
+}
+
+.sort-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+}
+
+.sort-btn {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    color: var(--black);
+    border: 1px solid var(--black);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.sort-btn.active {
+    background: var(--black);
+    color: var(--white);
+}
+
+.sort-btn:hover {
+    background: var(--black);
+    color: var(--white);
+}
+
+.restaurant-grid {
+
+    gap: 2rem;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.restaurant-card {
+    border: 1px solid var(--gray-light);
+    padding: 2rem;
+    transition: all 0.3s ease;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.restaurant-name {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.restaurant-location {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+.restaurant-cuisine {
+    font-size: 0.8rem;
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    background: var(--gray-light);
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .directory-header {
+        padding: 6rem 1rem 3rem;
+    }
+    
+    .directory-title {
+        font-size: 2rem;
+    }
+    
+    .sort-controls {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .restaurant-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem 3rem;
+    }
+    
+    .info-bar {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
