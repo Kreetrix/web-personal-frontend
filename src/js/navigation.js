@@ -1,7 +1,10 @@
-import { getRestaurants } from "./api.js";
+import { getRestaurants, getByDay, getByWeek } from "./api.js";
+import { DayWeekSchedule } from "./dayWeek.js";
+import { AuthSystem } from "./user/auth.js";
 
-const VISIBLE_THRESHOLD = 6; 
 const FADE_HEIGHT = 200; 
+const scheduleModal = new DayWeekSchedule();
+new AuthSystem();
 
 export function initNavigation() {
   const menuBtn = document.getElementById("restaurants");
@@ -17,25 +20,36 @@ async function showMenuGrid() {
   content.innerHTML = `
     <div class="menu-container">
       <div class="menu-controls">
-        <div class="sort-controls">
-          <button class="sort-btn active" data-sort="name">Name</button>
-          <button class="sort-btn" data-sort="city">City</button>
-          <button class="sort-btn" data-sort="address">Area</button>
+        <div class="filter-controls">
+          <div class="filter-group">
+            <label for="city-filter">City:</label>
+            <select id="city-filter" class="filter-select">
+              <option value="">All Cities</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="company-filter">Company:</label>
+            <select id="company-filter" class="filter-select">
+              <option value="">All Companies</option>
+            </select>
+          </div>
         </div>
-        <div class="results-count">Showing <span id="visibleCount">0</span> of <span id="totalCount">0</span> restaurants</div>
+        <div class="results-count"></div>
       </div>
       
-        <div class="menu-grid" id="restaurantGrid"></div>
-        <div class="fade-overlay"></div>
+      <div class="menu-grid" id="restaurantGrid"></div>
+      <div class="fade-overlay"></div>
       
       <button id="backButton" class="btn btn-primary">Back to Home</button>
     </div>
   `;
 
   applyFullPageStyles(content);
-  await renderRestaurants();
-  setupSorting();
+  const restaurants = await getRestaurants();
 
+  await setupFilters(restaurants);
+  await renderRestaurants(restaurants);
+  
   document.getElementById("backButton").addEventListener("click", () => {
     centerBox.style.display = "contents";
     content.innerHTML = '';
@@ -43,53 +57,77 @@ async function showMenuGrid() {
   });
 }
 
-async function renderRestaurants() {
+async function setupFilters(restaurants) {
+  const cityFilter = document.getElementById("city-filter");
+  const companyFilter = document.getElementById("company-filter");
+
+  const cities = [...new Set(restaurants.map(r => r.city))];
+  const company = [...new Set(restaurants.map(r => r.company))];
+
+  cities.forEach(city => {
+    const option = document.createElement("option");
+    option.value = city;
+    option.textContent = city;
+    cityFilter.appendChild(option);
+  });
+
+  company.forEach(company => {
+    const option = document.createElement("option");
+    option.value = company;
+    option.textContent = company;
+    companyFilter.appendChild(option);
+  });
+
+  cityFilter.addEventListener("change", () => filterRestaurants());
+  companyFilter.addEventListener("change", () => filterRestaurants());
+}
+
+async function filterRestaurants() {
+  const cityFilter = document.getElementById("city-filter").value;
+  const companyFilter = document.getElementById("company-filter").value;
+  const restaurants = await getRestaurants();
+
+  const filtered = restaurants.filter(restaurant => {
+    const cityMatch = !cityFilter || restaurant.city === cityFilter;
+    const companyMatch = !companyFilter || restaurant.company === companyFilter;
+    return cityMatch && companyMatch;
+  });
+
+  renderRestaurants(filtered);
+}
+
+async function renderRestaurants(restaurants) {
   const restaurantGrid = document.getElementById("restaurantGrid");
-  const menuItems = await getRestaurants();
-  const totalCount = document.getElementById("totalCount");
-  const visibleCount = document.getElementById("visibleCount");
+  const resultsCount = document.querySelector(".results-count");
 
-  totalCount.textContent = menuItems.length;
-  visibleCount.textContent = VISIBLE_THRESHOLD;
-
-  restaurantGrid.innerHTML = menuItems.map(item => `
-    <div class="menu-card">
+  restaurantGrid.innerHTML = restaurants.map(item => `
+    <div class="menu-card" data-restaurant-id="${item._id}">
       <h3>${item.name}</h3>
       <p class="address">${item.address}</p>
       <p class="city">${item.city}</p>
+      <p class="company">Company: ${item.company}</p>
     </div>
   `).join("");
-}
 
-async function setupSorting() {
-  document.querySelectorAll('.sort-btn').forEach(btn => {
-    btn.addEventListener('click', async function() {
-      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-      this.classList.add('active');
+  resultsCount.textContent = `Showing ${restaurants.length} restaurants`;
+
+  document.querySelectorAll('.menu-card').forEach(card => {
+    card.addEventListener('click', async (e) => {
+      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
       
-      const sortBy = this.dataset.sort;
-      const menuItems = await getRestaurants();
-      const sortedItems = sortRestaurants(menuItems, sortBy);
+      const restaurantId = card.dataset.restaurantId;
+      const restaurantName = card.querySelector('h3').textContent;
+
+      const menuDay = await getByDay(restaurantId);
+      const menuWeek = await getByWeek(restaurantId);
       
-      const restaurantGrid = document.getElementById("restaurantGrid");
-      restaurantGrid.innerHTML = sortedItems.map(item => `
-        <div class="menu-card">
-          <h3>${item.name}</h3>
-          <p class="address">${item.address}</p>
-          <p class="city">${item.city}</p>
-        </div>
-      `).join('');
+      const scheduleData = {
+        today: menuDay.courses,
+        week: menuWeek
+      };
       
-      document.querySelector(".menu-scroll-container").scrollTop = 0;
+      scheduleModal.show(scheduleData, restaurantName);
     });
-  });
-}
-
-function sortRestaurants(restaurants, key) {
-  return [...restaurants].sort((a, b) => {
-    const valA = a[key]?.toLowerCase() || '';
-    const valB = b[key]?.toLowerCase() || '';
-    return valA.localeCompare(valB);
   });
 }
 
@@ -122,10 +160,25 @@ function applyFullPageStyles(element) {
       gap: 1rem;
     }
     
-    .sort-controls {
+    .filter-controls {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 0.5rem;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .filter-select {
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid var(--gray-2);
+      min-width: 200px;
     }
     
     .results-count {
@@ -133,45 +186,18 @@ function applyFullPageStyles(element) {
       color: var(--gray-2);
     }
     
-    .sort-btn {
-      padding: 0.5rem 1rem;
-      background: transparent;
-      color: var(--black-1);
-      border: 1px solid var(--black-1);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    
-    .sort-btn.active {
-      background: var(--black-1);
-      color: var(--white-1);
-    }
-    
-    .menu-scroll-container {
-      flex: 1;
-      overflow-y: auto;
-      position: relative;
-      margin: 0 -2rem;
-      padding: 0 2rem;
-    }
-    
     .menu-grid {
       padding: 0px 100px 0px 100px;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      grid-column-gap: 0px;
-      grid-row-gap: 0px; 
-      overflow: auto;
-      flex-direction: row;
       gap: 1.5rem;
-      flex-wrap: wrap;
       padding-bottom: ${FADE_HEIGHT}px;
+      overflow: auto
     }
     
     .fade-overlay {
       position: fixed;
-      bottom: calc(2rem + 60px); /* Above back button */
+      bottom: calc(2rem + 60px);
       left: 0;
       right: 0;
       height: ${FADE_HEIGHT}px;
@@ -200,7 +226,8 @@ function applyFullPageStyles(element) {
     }
     
     .menu-card .address,
-    .menu-card .city {
+    .menu-card .city,
+    .menu-card .company {
       font-size: 0.9rem;
       color: var(--gray-2);
       margin-bottom: 0.3rem;
@@ -212,9 +239,14 @@ function applyFullPageStyles(element) {
     }
     
     @media (max-width: 768px) {
-      .sort-controls {
-        flex-wrap: wrap;
-        justify-content: center;
+      .menu-grid {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+      }
+      
+      .filter-controls {
+        flex-direction: column;
+        align-items: center;
       }
     }
   `;
