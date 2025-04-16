@@ -1,0 +1,81 @@
+.schedule-container {
+    padding: 1rem;
+  }
+  
+  .schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .view-toggle {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .view-btn {
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--gray-2);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .view-btn.active {
+    background: var(--black-1);
+    color: var(--white-1);
+    border-color: var(--black-1);
+  }
+  
+  .dish-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed var(--gray-1);
+  }
+  
+  .dish-name {
+    font-weight: 500;
+  }
+  
+  .dish-diets {
+    color: var(--gray-2);
+  }
+
+  .dish-price {
+    color: var(--gray-2);
+  }
+  
+  .week-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .week-day {
+    color: var(--black-1);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .week-item {
+    display: flex;
+    justify-content: space-between;
+    flex-flow: column;
+    padding: 0.75rem 0;
+    border-bottom: 1px dashed var(--gray-1);
+  }
+  
+  .day-column {
+    background: var(--white-1);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .day-column h3 {
+    margin-top: 0;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--gray-1);
+  }

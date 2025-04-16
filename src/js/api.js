@@ -80,25 +80,53 @@ async function loginUser(credentials) {
   return await response.json();
 }
 
-//dead for now
-async function getCurrentUser() {
-  const token = localStorage.getItem('authToken');
-  if (!token) return null;
-  
+async function fetchUsername(username) {
   try {
-    const response = await fetch(`${this.baseUrl}/users/token`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) throw new Error('Not authenticated');
-    
+    const response = await fetch(`${API}/users/available/${username}`);
     return await response.json();
-  } catch (error) {
-    localStorage.removeItem('authToken');
-    return null;
+  } catch (e) {
+    console.log(`Error -> ${e}`);
   }
 }
 
-export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, getCurrentUser};
+async function fetchUserData() {
+  const token = localStorage.getItem('authToken');
+  if (!token) throw new Error('Not authenticated');
+  
+  const response = await fetch(`${API}/users/token`, {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch profile data');
+  }
+  
+  return await response.json();
+}
+
+async function uploadAvatar(file) {
+  const token = localStorage.getItem('authToken');
+  if (!token) throw new Error('Not authenticated');
+  
+  const formData = new FormData();
+  formData.append('avatar', file);
+  
+  const response = await fetch(`${API}/users/avatar`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: formData
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Upload failed');
+  }
+  
+  return await response.json();
+}
+
+export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, fetchUserData, uploadAvatar, fetchUsername};

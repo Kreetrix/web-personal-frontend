@@ -46,7 +46,6 @@ async function showMenuGrid() {
 
   applyFullPageStyles(content);
   const restaurants = await getRestaurants();
-
   await setupFilters(restaurants);
   await renderRestaurants(restaurants);
   
