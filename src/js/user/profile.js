@@ -1,4 +1,5 @@
 import { fetchUserData, uploadAvatar } from "../api.js";
+import generateLoadingContent from "../components/loading.js";
 
 export class ProfileSystem {
   constructor(contentElement, centerBoxElement) {
@@ -11,7 +12,7 @@ export class ProfileSystem {
     try {
       if (this.centerBox) this.centerBox.style.display = 'none';
       
-      this.content.innerHTML = this.generateLoadingContent();
+      generateLoadingContent(this.content);
       applyProfileStyles(this.content);
       
       this.userData = await fetchUserData();
@@ -24,16 +25,7 @@ export class ProfileSystem {
     }
   }
 
-  generateLoadingContent() {
-    return `
-      <div class="profile-container">
-        <div class="profile-loading">
-          <div class="loading-spinner"></div>
-          <p>Loading profile...</p>
-        </div>
-      </div>
-    `;
-  }
+  
 
   generateProfileContent() {
     if (!this.userData) return '';
@@ -138,7 +130,7 @@ export class ProfileSystem {
     }
   }
   
-  //TODO make a components
+  //TODO make a component
   showAuthMessage(message, type) {
     const oldMessage = document.querySelector('.profile-message');
     if (oldMessage) oldMessage.remove();
@@ -258,21 +250,6 @@ function applyProfileStyles(element) {
         display: flex;
         flex-direction: column;
         gap: 1rem;
-      }
-      
-      .profile-loading {
-        text-align: center;
-      }
-      
-      .loading-spinner {
-        display: inline-block;
-        width: 40px;
-        height: 40px;
-        border: 4px solid rgba(0,0,0,0.1);
-        border-radius: 50%;
-        border-top-color: var(--black-1);
-        animation: spin 1s linear infinite;
-        margin-bottom: 1rem;
       }
       
       .profile-error {

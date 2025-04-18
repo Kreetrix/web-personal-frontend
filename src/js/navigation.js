@@ -1,19 +1,22 @@
 import { getRestaurants, getByDay, getByWeek } from "./api.js";
 import { DayWeekSchedule } from "./dayWeek.js";
 import { AuthSystem } from "./user/auth.js";
+import generateLoadingContent from "./components/loading.js";
 
 const FADE_HEIGHT = 200; 
 const scheduleModal = new DayWeekSchedule();
 new AuthSystem();
 
+const content = document.getElementById("content");
+const centerBox = document.querySelector(".centerBox");
+
 export function initNavigation() {
   const menuBtn = document.getElementById("restaurants");
   if (menuBtn) menuBtn.addEventListener("click", showMenuGrid);
+  navButtons();
 }
 
 async function showMenuGrid() {
-  const content = document.getElementById("content");
-  const centerBox = document.querySelector(".centerBox");
 
   centerBox.style.display = "none";
 
@@ -45,6 +48,9 @@ async function showMenuGrid() {
   `;
 
   applyFullPageStyles(content);
+
+  generateLoadingContent(content);
+
   const restaurants = await getRestaurants();
   await setupFilters(restaurants);
   await renderRestaurants(restaurants);
@@ -84,6 +90,7 @@ async function setupFilters(restaurants) {
 async function filterRestaurants() {
   const cityFilter = document.getElementById("city-filter").value;
   const companyFilter = document.getElementById("company-filter").value;
+
   const restaurants = await getRestaurants();
 
   const filtered = restaurants.filter(restaurant => {
@@ -127,6 +134,14 @@ async function renderRestaurants(restaurants) {
       
       scheduleModal.show(scheduleData, restaurantName);
     });
+  });
+}
+
+function navButtons() {
+  document.getElementById("home").addEventListener("click", () => {
+    centerBox.style.display = "contents";
+    content.innerHTML = '';
+    content.removeAttribute("style");
   });
 }
 
