@@ -1,4 +1,4 @@
-import { registerUser, loginUser, fetchUsername, fetchUserData} from "../api.js";
+import { registerUser, loginUser, fetchUsername} from "../api.js";
 import { ProfileSystem } from './profile.js';
 
 export class AuthSystem {

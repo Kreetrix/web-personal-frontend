@@ -1,13 +1,16 @@
 import { Modal } from './modal.js';
+import { openMapModal } from './map.js'; // ⬅️ import the map modal
 
 export class DayWeekSchedule {
   constructor() {
     this.modal = new Modal();
     this.currentView = 'day';
     this.scheduleData = null;
+    this.restaurantMeta = null;
   }
 
-  show(scheduleData, restaurantName) {
+  show(scheduleData, restaurantName, restaurantMeta) {
+    this.restaurantMeta = restaurantMeta; 
     const content = this.generateContent(scheduleData, restaurantName);
     this.modal.create(content, { width: '800px' });
     this.setupEventListeners();
@@ -22,6 +25,7 @@ export class DayWeekSchedule {
           <div class="view-toggle">
             <button class="view-btn ${this.currentView === 'day' ? 'active' : ''}" data-view="day">Day</button>
             <button class="view-btn ${this.currentView === 'week' ? 'active' : ''}" data-view="week">Week</button>
+            <button class="view-btn" id="open-map">Map</button> <!-- ⬅️ Map Button -->
           </div>
         </div>
         
@@ -48,7 +52,6 @@ export class DayWeekSchedule {
   }
 
   generateWeekView(weekSchedule) {
-    console.log(weekSchedule)
     return `
       <div class="week-view">
         ${weekSchedule.days.map(day => `
@@ -71,10 +74,17 @@ export class DayWeekSchedule {
   setupEventListeners() {
     const buttons = document.querySelectorAll('.view-btn');
     buttons.forEach(button => {
-      button.addEventListener('click', () => {
-        this.currentView = button.dataset.view;
-        this.updateView();
-      });
+      if(button.id === "open-map"){
+        button.addEventListener('click', () => {
+          openMapModal(this.restaurantMeta.location.coordinates.reverse(), this.restaurantMeta.name);
+        });
+      }
+      else {
+        button.addEventListener('click', () => {
+          this.currentView = button.dataset.view;
+          this.updateView();
+        });
+      }
     });
   }
 

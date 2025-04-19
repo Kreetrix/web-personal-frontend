@@ -17,8 +17,11 @@ export function initNavigation() {
 }
 
 async function showMenuGrid() {
-
   centerBox.style.display = "none";
+
+  generateLoadingContent(content);
+
+  const restaurants = await getRestaurants();
 
   content.innerHTML = `
     <div class="menu-container">
@@ -49,12 +52,9 @@ async function showMenuGrid() {
 
   applyFullPageStyles(content);
 
-  generateLoadingContent(content);
-
-  const restaurants = await getRestaurants();
   await setupFilters(restaurants);
   await renderRestaurants(restaurants);
-  
+
   document.getElementById("backButton").addEventListener("click", () => {
     centerBox.style.display = "contents";
     content.innerHTML = '';
@@ -106,6 +106,8 @@ async function renderRestaurants(restaurants) {
   const restaurantGrid = document.getElementById("restaurantGrid");
   const resultsCount = document.querySelector(".results-count");
 
+  console.log(restaurants)
+
   restaurantGrid.innerHTML = restaurants.map(item => `
     <div class="menu-card" data-restaurant-id="${item._id}">
       <h3>${item.name}</h3>
@@ -123,6 +125,7 @@ async function renderRestaurants(restaurants) {
       
       const restaurantId = card.dataset.restaurantId;
       const restaurantName = card.querySelector('h3').textContent;
+      const restaurant = restaurants.find(item => item._id === restaurantId);
 
       const menuDay = await getByDay(restaurantId);
       const menuWeek = await getByWeek(restaurantId);
@@ -132,7 +135,7 @@ async function renderRestaurants(restaurants) {
         week: menuWeek
       };
       
-      scheduleModal.show(scheduleData, restaurantName);
+      scheduleModal.show(scheduleData, restaurantName, restaurant);
     });
   });
 }
