@@ -1,11 +1,13 @@
-import { fetchUserData, uploadAvatar } from "../api.js";
+import { fetchUserData, uploadAvatar, updateUser } from "../api.js";
 import generateLoadingContent from "../components/loading.js";
+import { Modal } from '../modal.js';
 
 export class ProfileSystem {
   constructor(contentElement, centerBoxElement) {
     this.content = contentElement;
     this.centerBox = centerBoxElement;
     this.userData = null;
+    this.modal = new Modal();
   }
 
   async showProfile() {
@@ -28,10 +30,7 @@ export class ProfileSystem {
   
 
   generateProfileContent() {
-    if (!this.userData) return '';
-
-    console.log(this.userData)
-    
+    if (!this.userData) return '';    
     const { username, email, favouriteRestaurant, role, avatar } = this.userData;
     
     return `
@@ -80,31 +79,29 @@ export class ProfileSystem {
 
   setupProfileEvents() {
     document.getElementById('back-button').addEventListener('click', () => {
-        if (this.centerBox) this.centerBox.style.display = 'contents';
-        this.content.innerHTML = '';
-        this.content.removeAttribute('style');
+      if (this.centerBox) this.centerBox.style.display = 'contents';
+      this.content.innerHTML = '';
+      this.content.removeAttribute('style');
     });
-
+  
     const changeAvatarBtn = document.getElementById('change-avatar');
     if (changeAvatarBtn) {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.id = 'avatar-upload';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-        
-        fileInput.addEventListener('change', (e) => this.changeAvatar(e));
-        
-        changeAvatarBtn.parentNode.insertBefore(fileInput, changeAvatarBtn);
-        
-        changeAvatarBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.id = 'avatar-upload';
+      fileInput.accept = 'image/*';
+      fileInput.style.display = 'none';
+  
+      fileInput.addEventListener('change', (e) => this.changeAvatar(e));
+      changeAvatarBtn.parentNode.insertBefore(fileInput, changeAvatarBtn);
+  
+      changeAvatarBtn.addEventListener('click', () => fileInput.click());
     }
-  }
-
-  editProfile() {
-    console.log('sus');
+  
+    const editProfileBtn = document.getElementById('edit-profile');
+    if (editProfileBtn) {
+      editProfileBtn.addEventListener('click', () => this.openEditModal());
+    }
   }
 
   async changeAvatar(event) {
@@ -167,6 +164,62 @@ export class ProfileSystem {
       this.content.removeAttribute('style');
     });
   }
+  
+  openEditModal() {
+    const { username, email } = this.userData;
+  
+    const modalContent = `
+      <div class="edit-profile-modal">
+        <h2>Edit Profile</h2>
+        <form id="edit-profile-form" class="edit-form">
+          <label>
+            Username:
+            <input type="text" name="username" value="${username}" required />
+          </label>
+          <label>
+            Email:
+            <input type="email" name="email" value="${email}" required />
+          </label>
+          <label>
+            Current Password:
+            <input type="password" name="password" placeholder="Enter current password" required />
+          </label>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" id="cancel-edit" class="btn btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    `;
+  
+    this.modal.create(modalContent, { width: '500px' });
+  
+    const form = document.getElementById('edit-profile-form');
+    form.addEventListener('submit', async (e) => await this.submitEditForm(e));
+  
+    document.getElementById('cancel-edit').addEventListener('click', () => {
+      this.modal.close();
+    });
+  }
+
+  async submitEditForm(e) {
+    e.preventDefault();
+  
+    const formData = new FormData(e.target);
+    const updatedData = {
+      username: formData.get('username'),
+      email: formData.get('email'),
+      password: formData.get('password')
+    };
+    
+    await updateUser(updatedData);
+    console.log("UPDATED");
+    this.modal.close();
+  }
+  
+  
+
+
 }
 
 function applyProfileStyles(element) {
@@ -258,6 +311,38 @@ function applyProfileStyles(element) {
         padding: 2rem;
       }
       
+      .edit-profile-modal h2 {
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+
+      .edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .edit-form label {
+        display: flex;
+        flex-direction: column;
+        font-weight: 500;
+      }
+
+      .edit-form input {
+        padding: 0.5rem;
+        font-size: 1rem;
+        border: 1px solid var(--gray-1);
+        border-radius: 4px;
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+
       @keyframes spin {
         to { transform: rotate(360deg); }
       }

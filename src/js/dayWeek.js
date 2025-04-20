@@ -1,23 +1,25 @@
 import { Modal } from './modal.js';
-import { openMapModal } from './map.js'; // ⬅️ import the map modal
+import { openMapModal } from './map.js'; 
+import { getByDay, getByWeek } from './api.js';
+import generateLoadingContent from './components/loading.js';
 
 export class DayWeekSchedule {
   constructor() {
     this.modal = new Modal();
     this.currentView = 'day';
-    this.scheduleData = null;
     this.restaurantMeta = null;
+    this.menuDay = null;
+    this.menuWeek = null;
   }
 
-  show(scheduleData, restaurantName, restaurantMeta) {
+  async show(restaurantName, restaurantMeta) {
     this.restaurantMeta = restaurantMeta; 
-    const content = this.generateContent(scheduleData, restaurantName);
+    const content = await this.generateContent(restaurantName);
     this.modal.create(content, { width: '800px' });
     this.setupEventListeners();
-    this.scheduleData = scheduleData;
   }
 
-  generateContent(scheduleData, restaurantName) {
+  async generateContent(restaurantName) {
     return `
       <div class="schedule-container">
         <div class="schedule-header">
@@ -31,19 +33,22 @@ export class DayWeekSchedule {
         
         <div class="schedule-content">
           ${this.currentView === 'day' 
-            ? this.generateDayView(scheduleData.today) 
-            : this.generateWeekView(scheduleData.week)}
+            ? await this.generateDayView() 
+            : await this.generateWeekView()}
         </div>
       </div>
     `;
   }
 
-  generateDayView(courses) {
+  async generateDayView() {
+    
+    if(!this.menuDay) this.menuDay = await getByDay(this.restaurantMeta._id);
+
     return `
       <div class="day-view">
-        ${courses.map(course => `
+        ${this.menuDay.courses.map(course => `
           <div class="dish-item">
-            <span class="dish-name">${course.name}</span>
+            <span class="dish-name">${course.name ?? "No menu for today"}</span>
             <span class="dish-diets">${course.price ?? ""} ${course.diets ?? ""}</span>
           </div>
         `).join('')}
@@ -51,10 +56,13 @@ export class DayWeekSchedule {
     `;
   }
 
-  generateWeekView(weekSchedule) {
+  async generateWeekView() {
+
+    if(!this.menuWeek) this.menuWeek = await getByWeek(this.restaurantMeta._id);
+
     return `
       <div class="week-view">
-        ${weekSchedule.days.map(day => `
+        ${this.menuWeek.days.map(day => `
           <div class="day-column">
             <div class="week-day">
               ${day.date}
@@ -80,24 +88,37 @@ export class DayWeekSchedule {
         });
       }
       else {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
           this.currentView = button.dataset.view;
-          this.updateView();
+          await this.updateView();
         });
       }
     });
   }
 
-  updateView() {
+  async updateView() {
     const content = document.querySelector('.schedule-content');
     const buttons = document.querySelectorAll('.view-btn');
-    
+
+    content.innerHTML = `<div class="internal-loading"></div>`;
+    const loader = content.querySelector('.internal-loading');
+    loader.innerHTML = `
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    `;
+  
     buttons.forEach(btn => {
       btn.classList.toggle('active', btn.dataset.view === this.currentView);
     });
-    
-    content.innerHTML = this.currentView === 'day'
-      ? this.generateDayView(this.scheduleData.today)
-      : this.generateWeekView(this.scheduleData.week);
+  
+    const viewHTML = this.currentView === 'day'
+      ? await this.generateDayView()
+      : await this.generateWeekView();
+  
+    content.innerHTML = viewHTML;
   }
+  
+  
 }

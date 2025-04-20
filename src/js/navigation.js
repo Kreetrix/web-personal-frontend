@@ -1,4 +1,4 @@
-import { getRestaurants, getByDay, getByWeek } from "./api.js";
+import { getRestaurants } from "./api.js";
 import { DayWeekSchedule } from "./dayWeek.js";
 import { AuthSystem } from "./user/auth.js";
 import generateLoadingContent from "./components/loading.js";
@@ -127,15 +127,7 @@ async function renderRestaurants(restaurants) {
       const restaurantName = card.querySelector('h3').textContent;
       const restaurant = restaurants.find(item => item._id === restaurantId);
 
-      const menuDay = await getByDay(restaurantId);
-      const menuWeek = await getByWeek(restaurantId);
-      
-      const scheduleData = {
-        today: menuDay.courses,
-        week: menuWeek
-      };
-      
-      scheduleModal.show(scheduleData, restaurantName, restaurant);
+      scheduleModal.show(restaurantName, restaurant);
     });
   });
 }

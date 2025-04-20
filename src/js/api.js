@@ -129,4 +129,24 @@ async function uploadAvatar(file) {
   return await response.json();
 }
 
-export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, fetchUserData, uploadAvatar, fetchUsername};
+async function updateUser(data){
+  const token = localStorage.getItem('authToken');
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API}/users`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+  console.log(response.ok);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'update failed');
+  }
+
+  console.log(await response.json());
+}
+
+export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, fetchUserData, uploadAvatar, fetchUsername, updateUser};
