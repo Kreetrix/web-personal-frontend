@@ -1,4 +1,4 @@
-import { fetchUserData, uploadAvatar, updateUser } from "../api.js";
+import { fetchUserData, uploadAvatar, updateUser, getRestaurant } from "../api.js";
 import generateLoadingContent from "../components/loading.js";
 import { Modal } from '../modal.js';
 
@@ -8,6 +8,7 @@ export class ProfileSystem {
     this.centerBox = centerBoxElement;
     this.userData = null;
     this.modal = new Modal();
+    this.restaurant = null;
   }
 
   async showProfile() {
@@ -18,6 +19,10 @@ export class ProfileSystem {
       applyProfileStyles(this.content);
       
       this.userData = await fetchUserData();
+
+      if(this.userData.favouriteRestaurant) {
+        this.restaurant = await getRestaurant(this.userData.favouriteRestaurant);
+      }
       
       this.content.innerHTML = this.generateProfileContent();
       this.setupProfileEvents();
@@ -27,8 +32,6 @@ export class ProfileSystem {
     }
   }
 
-  
-
   generateProfileContent() {
     if (!this.userData) return '';    
     const { username, email, favouriteRestaurant, role, avatar } = this.userData;
@@ -36,6 +39,9 @@ export class ProfileSystem {
     return `
       <div class="profile-container">
         <div class="profile-header">
+          <div class="profile-avatar">
+            ${`<img src="https://media2.edu.metropolia.fi/restaurant/uploads/${avatar}" alt="${username}'s avatar">`}
+          </div>
           <h1 class="profile-title">Your Profile</h1>
         </div>
         
@@ -54,16 +60,11 @@ export class ProfileSystem {
             <span class="detail-label">Role:</span>
             <span class="detail-value">${role}</span>
           </div>
-
-          <div class="detail-row">
-            <span class="detail-label">Avatar file name:</span>
-            <span class="detail-value">${avatar ?? "no avatar"}</span>
-          </div>
           
           ${favouriteRestaurant ? `
             <div class="detail-row">
               <span class="detail-label">Favorite Restaurant:</span>
-              <span class="detail-value">${favouriteRestaurant}</span>
+              <span class="detail-value">${this.restaurant.name}</span>
             </div>
           ` : ''}
         </div>
@@ -72,6 +73,7 @@ export class ProfileSystem {
           <button id="edit-profile" class="btn btn-primary">Edit Profile</button>
           <button id="change-avatar" class="btn btn-secondary">Change Avatar</button>
           <button id="back-button" class="btn">Back to Main</button>
+          <button id="logout" class="btn">Logout</button>
         </div>
       </div>
     `;
@@ -82,6 +84,11 @@ export class ProfileSystem {
       if (this.centerBox) this.centerBox.style.display = 'contents';
       this.content.innerHTML = '';
       this.content.removeAttribute('style');
+    });
+
+    document.getElementById('logout').addEventListener('click', async () => {
+      localStorage.removeItem('authToken');
+      await this.showProfile();
     });
   
     const changeAvatarBtn = document.getElementById('change-avatar');
@@ -114,7 +121,10 @@ export class ProfileSystem {
       avatarBtn.textContent = 'Uploading...';
 
       const result = await uploadAvatar(file);
-      if (result) this.showAuthMessage('Avatar updated successfully!', 'success');
+      if (result) {
+        await this.showProfile();
+        this.showAuthMessage('Avatar updated successfully!', 'success');
+      }
         
     } catch (error) {
       this.showAuthMessage(error.message, 'error');
@@ -127,7 +137,6 @@ export class ProfileSystem {
     }
   }
   
-  //TODO make a component
   showAuthMessage(message, type) {
     const oldMessage = document.querySelector('.profile-message');
     if (oldMessage) oldMessage.remove();
@@ -181,8 +190,8 @@ export class ProfileSystem {
             <input type="email" name="email" value="${email}" required />
           </label>
           <label>
-            Current Password:
-            <input type="password" name="password" placeholder="Enter current password" required />
+            Password:
+            <input type="password" name="password" placeholder="Password" />
           </label>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">Save</button>
@@ -208,18 +217,24 @@ export class ProfileSystem {
     const formData = new FormData(e.target);
     const updatedData = {
       username: formData.get('username'),
-      email: formData.get('email'),
-      password: formData.get('password')
+      email: formData.get('email')
     };
-    
-    await updateUser(updatedData);
-    console.log("UPDATED");
-    this.modal.close();
+
+    const password = formData.get('password');
+    if (password.trim() !== '') {
+      updatedData.password = password;
+    }
+
+    try {
+      await updateUser(updatedData);
+      this.modal.close();
+      this.showAuthMessage('Profile updated successfully!', 'success');
+      
+      await this.showProfile();
+    } catch (error) {
+      this.showAuthMessage(error.message, 'error');
+    }
   }
-  
-  
-
-
 }
 
 function applyProfileStyles(element) {
@@ -253,13 +268,13 @@ function applyProfileStyles(element) {
         font-size: 2rem;
         font-weight: 400;
         color: var(--black-1);
-        margin-bottom: 1rem;
+        margin-top: 1rem;
       }
       
       .profile-avatar {
         width: 120px;
         height: 120px;
-        margin: 0 auto 1.5rem;
+        margin: 0 auto 1rem;
         border-radius: 50%;
         overflow: hidden;
         border: 3px solid var(--gray-1);
@@ -341,7 +356,6 @@ function applyProfileStyles(element) {
         gap: 1rem;
         margin-top: 1rem;
       }
-
 
       @keyframes spin {
         to { transform: rotate(360deg); }

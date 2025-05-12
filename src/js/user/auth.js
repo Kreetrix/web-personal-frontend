@@ -157,7 +157,9 @@ export class AuthSystem {
       if (type === 'login') {
         response = await loginUser({ username, password });
       } else {
-        response = await registerUser({ username, email, password });
+        const res = await registerUser({ username, email, password });
+        if(!res) return;
+        response = await loginUser({ username, password });
       }
       
       this.showAuthMessage(
@@ -165,7 +167,6 @@ export class AuthSystem {
         'success'
       );
       
-      //store the token!!
       localStorage.setItem('authToken', response.token);
 
       this.currentUser = response.user;

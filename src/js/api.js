@@ -20,6 +20,19 @@ async function getRestaurants() {
   }
 }
 
+async function getRestaurant(id) {
+  try {
+    const response = await fetch(
+      `${API}/restaurants/${id}`,
+      {method: 'GET'},
+      {headers}
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(`Error -> ${e}`);
+  }
+}
+
 async function getByDay(id) {
   try {
     const response = await fetch(
@@ -132,10 +145,12 @@ async function uploadAvatar(file) {
 async function updateUser(data){
   const token = localStorage.getItem('authToken');
   if (!token) throw new Error('Not authenticated');
+  console.log(JSON.stringify(data))
 
   const response = await fetch(`${API}/users`, {
     method: 'PUT',
     headers: {
+      'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     },
     body: JSON.stringify(data)
@@ -145,8 +160,28 @@ async function updateUser(data){
     const errorData = await response.json();
     throw new Error(errorData.message || 'update failed');
   }
-
-  console.log(await response.json());
+  return await response.json();
 }
 
-export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, fetchUserData, uploadAvatar, fetchUsername, updateUser};
+async function favRestaurant(restaurantId) {
+  const token = localStorage.getItem('authToken');
+  if (!token) throw new Error('Not authenticated');
+
+  const response = await fetch(`${API}/users`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ favouriteRestaurant: restaurantId })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to toggle favorite');
+  }
+
+  return await response.json();
+}
+
+export {getRestaurants, getByDay, getByWeek, registerUser, loginUser, fetchUserData, uploadAvatar, fetchUsername, updateUser, favRestaurant, getRestaurant};

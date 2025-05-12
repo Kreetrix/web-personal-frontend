@@ -1,4 +1,4 @@
-import { getRestaurants } from "./api.js";
+import { getRestaurants, favRestaurant, fetchUserData } from "./api.js";
 import { DayWeekSchedule } from "./dayWeek.js";
 import { AuthSystem } from "./user/auth.js";
 import generateLoadingContent from "./components/loading.js";
@@ -106,28 +106,67 @@ async function renderRestaurants(restaurants) {
   const restaurantGrid = document.getElementById("restaurantGrid");
   const resultsCount = document.querySelector(".results-count");
 
-  console.log(restaurants)
+  let favouriteRestaurant;
+  try {
+    const userData = await fetchUserData();
+    favouriteRestaurant = userData.favouriteRestaurant || "";
+  } catch (error) {  }
 
-  restaurantGrid.innerHTML = restaurants.map(item => `
+  const sortedRestaurants = restaurants.sort((a, b) => {
+    if (a._id === favouriteRestaurant) return -1;
+    if (b._id === favouriteRestaurant) return 1;
+    return 0;
+  });
+
+
+  restaurantGrid.innerHTML = sortedRestaurants.map(item => {
+    console.log("item, ", item)
+    const isFavorite = favouriteRestaurant.includes(item._id);
+    return `
     <div class="menu-card" data-restaurant-id="${item._id}">
-      <h3>${item.name}</h3>
+      <div class="menu-card-header">
+        <h3>${item.name}</h3>
+        ${localStorage.getItem('authToken') ? `
+          <button class="favorite-btn ${isFavorite ? 'favorited' : ''}" data-restaurant-id="${item._id}">
+            ${isFavorite ? '❤️‍🔥' : '🤍'}
+          </button>
+        ` : ''}
+      </div>
       <p class="address">${item.address}</p>
       <p class="city">${item.city}</p>
       <p class="company">Company: ${item.company}</p>
     </div>
-  `).join("");
+  `}).join("");
 
   resultsCount.textContent = `Showing ${restaurants.length} restaurants`;
 
   document.querySelectorAll('.menu-card').forEach(card => {
     card.addEventListener('click', async (e) => {
-      if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON') return;
+      if (e.target.closest('.favorite-btn')) return;
       
       const restaurantId = card.dataset.restaurantId;
       const restaurantName = card.querySelector('h3').textContent;
       const restaurant = restaurants.find(item => item._id === restaurantId);
 
       scheduleModal.show(restaurantName, restaurant);
+    });
+  });
+
+  document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      let restaurantId = btn.dataset.restaurantId;
+      
+      try {
+        await favRestaurant(restaurantId);
+        
+        btn.classList.toggle('favorited');
+        btn.textContent = btn.classList.contains('favorited') ? '❤️‍🔥' : '🤍';
+        const updatedRestaurants = await getRestaurants();
+        renderRestaurants(updatedRestaurants);
+      } catch (error) {
+        console.error('Failed to toggle favorite', error);
+        alert('Failed to update favorite. Please try again.');
+      }
     });
   });
 }
