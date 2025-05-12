@@ -120,7 +120,7 @@ async function renderRestaurants(restaurants) {
 
 
   restaurantGrid.innerHTML = sortedRestaurants.map(item => {
-    console.log("item, ", item)
+    if(!favouriteRestaurant) favouriteRestaurant = '';
     const isFavorite = favouriteRestaurant.includes(item._id);
     return `
     <div class="menu-card" data-restaurant-id="${item._id}">
